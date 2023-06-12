@@ -1,5 +1,6 @@
 <?php
 
+namespace CbyteDigital\BiDataExport\Jobs;
 
 use CbyteDigital\BiDataExport\Dto\BiExport;
 use Illuminate\Bus\Queueable;

@@ -55,7 +55,7 @@ return [
     /**
      * Determines the export action. You can define your own implementation here.
      */
-    'export_job' => \ExportBiToCsv::class,
+    'export_job' => CbyteDigital\BiDataExport\Jobs\ExportBiToCsv::class,
 
     /**
      * Determines the export location.

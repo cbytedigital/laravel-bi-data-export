@@ -31,9 +31,93 @@ php artisan vendor:publish --provider="CbyteDigital\BiDataExport\BiDataExportSer
 
 ## Usage
 
-Currently, only exporting to .CSV is supported. Which is the most usual method of exporting large datasets.
+Currently, only exporting to .CSV is supported. Which is the most usual method of exporting large datasets. Lucky, you can write your own implemention of a export job and reference the class in the config.
 
-To include your models for the export, configure your models to use the ```BiExportable``` trait. If you require to export for example a pivot table, which does usually not have a dedicated model, you can manually add the table and required columns/config for exporting to the configuration file.
+The export can be used directly in requests (sync), but it is recommended to use background workers and queueing.
+
+To include your models for the export, configure your models to use the ```BiExportable``` trait.
+```php
+class Client extends Model
+{
+    use BiExportable;
+}
+```
+
+If desired define the selected and/or hidden fields in your model as follows (optional):
+```php
+class Client extends Model
+{
+    use BiExportable;
+    
+    // Default behaviour
+    public $biExportable = '*';
+
+    // Or select specific columns
+    public $biExportable = [
+        'id',
+        'username'
+    ];
+
+    // Values of hidden fields will be replaced
+    public $biHidden = [
+        'first_name',
+        'last_name'
+    ];
+
+    // Define the placeholder value for hidden fields.
+    // If not defined will resort to using the variable defined in the config.
+    public $biHiddenText = 'REDACTED';
+```
+
+If you require to export for example a pivot table, which does usually not have a dedicated model, you can manually add the table and required columns/config for exporting to the configuration file.
+```php
+<?php
+
+return [
+    /**
+     * Define models for exporting
+     * ...
+     */
+    'models' => [
+        \App\Models\Model::class
+    ],
+
+    /**
+     * Define tables for exporting
+     * ...
+     */
+    'tables' => [
+        'partners' => [
+            'columns' => '*'
+        ]
+    ],
+
+    /**
+     * Determines the export action. You can define your own implementation here.
+     */
+    'export_job' => CbyteDigital\BiDataExport\Jobs\ExportBiToCsv::class,
+
+    /**
+     * Determines the export location.
+     */
+    'export_disk' => env('BI_EXPORT_DISK', 's3'),
+
+    /**
+     * Default replacement value if not overwritten by the model or tables config.
+     */
+    'default_hidden_text' => env('BI_HIDDEN_TEXT', 'REDACTED'),
+
+    /**
+     * Ability to add a prefix to the filename. For example: {prefix}table.sql
+     */
+    'filename_prefix' => env('BI_FILENAME_PREFIX'),
+
+    /**
+     * Ability to add a suffix to the filename. For example: table{suffix}.sql
+     */
+    'filename_suffix' => env('BI_FILENAME_SUFFIX')
+];
+```
 
 Add the command for exporting on a schedule:
 ```php
