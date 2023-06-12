@@ -67,6 +67,7 @@ class Client extends Model
     // Define the placeholder value for hidden fields.
     // If not defined will resort to using the variable defined in the config.
     public $biHiddenText = 'REDACTED';
+}
 ```
 
 If you require to export for example a pivot table, which does usually not have a dedicated model, you can manually add the table and required columns/config for exporting to the configuration file.
