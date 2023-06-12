@@ -17,7 +17,7 @@ class ExportBiToCsv implements ShouldQueue
 
     public BiExport $biExport;
 
-    public string $delimiter = ';';
+    public string $delimiter;
 
     public string $disk;
 
@@ -29,6 +29,7 @@ class ExportBiToCsv implements ShouldQueue
     public function __construct(BiExport $biExport)
     {
         $this->biExport = $biExport;
+        $this->delimiter = config('bi-export.export_csv_delimiter');
         $this->disk = config('bi-export.export_disk');
     }
 

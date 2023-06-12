@@ -49,6 +49,9 @@ class ExportBiDataCommand extends Command
             ->map(fn ($v, $k) => BiExport::from($k, $v))
             ->each(fn ($e) => dispatch(new $exportJob($e)));
 
+        $syncQueue = config('queue.default') === 'sync';
+        $this->info(($syncQueue ? 'Finished ' : 'Dispatched ').$exports->count().' export jobs.');
+
         return Command::SUCCESS;
     }
 }

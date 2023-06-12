@@ -63,6 +63,11 @@ return [
     'export_disk' => env('BI_EXPORT_DISK', 's3'),
 
     /**
+     * CSV export job delimiter value
+     */
+    'export_csv_delimiter' => env('BI_EXPORT_CSV_DELIMITER', ';'),
+
+    /**
      * Default replacement value if not overwritten by the model or tables config.
      */
     'default_hidden_text' => env('BI_HIDDEN_TEXT', 'REDACTED'),
