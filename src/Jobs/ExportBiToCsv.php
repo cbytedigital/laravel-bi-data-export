@@ -83,7 +83,7 @@ class ExportBiToCsv implements ShouldQueue
         return now()->toDateString() . '/' . $fileName . '.csv';
     }
 
-    private function replaceHiddenValues(&$value): void
+    private function replaceHiddenValues($value): void
     {
         foreach ($this->biExport->hidden as $hiddenColumn) {
             if (property_exists($value, $hiddenColumn)) {
