@@ -80,5 +80,11 @@ return [
     /**
      * Ability to add a suffix to the filename. For example: table{suffix}.sql
      */
-    'filename_suffix' => env('BI_FILENAME_SUFFIX')
+    'filename_suffix' => env('BI_FILENAME_SUFFIX'),
+
+    /**
+     * Logging channel to use for BI export logs.
+     * Falls back to bi-export if not set.
+     */
+    'log_channel' => env('BI_EXPORT_LOG_CHANNEL', 'bi-export'),
 ];

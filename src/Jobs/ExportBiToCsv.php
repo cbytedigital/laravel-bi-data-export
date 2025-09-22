@@ -41,7 +41,10 @@ class ExportBiToCsv implements ShouldQueue
      */
     public function handle(): void
     {
-        Log::info('BI Export Job: Starting export', [
+        $logChannel = config('bi-export.log_channel', config('logging.default'));
+        $log = Log::channel($logChannel);
+
+        $log->info('BI Export Job: Starting export', [
             'table' => $this->biExport->table,
             'columns' => $this->biExport->columns,
             'disk' => $this->disk
@@ -53,7 +56,7 @@ class ExportBiToCsv implements ShouldQueue
             $chunkSize = config('bi-export.chunk_size', 1000);
             $targetFile = $this->getTargetFileName();
 
-            Log::info('BI Export Job: Starting to process records in chunks', [
+            $log->info('BI Export Job: Starting to process records in chunks', [
                 'table' => $this->biExport->table,
                 'chunk_size' => $chunkSize
             ]);
@@ -74,7 +77,7 @@ class ExportBiToCsv implements ShouldQueue
 
             if ($hasIdColumn) {
                 $query->orderBy('id');
-                Log::info('BI Export Job: Using id column for ordering', [
+                $log->info('BI Export Job: Using id column for ordering', [
                     'table' => $this->biExport->table
                 ]);
             } else {
@@ -82,13 +85,14 @@ class ExportBiToCsv implements ShouldQueue
                 $columns = DB::getSchemaBuilder()->getColumnListing($this->biExport->table);
                 $firstColumn = $columns[0] ?? 'created_at';
                 $query->orderBy($firstColumn);
-                Log::info('BI Export Job: Using first available column for ordering', [
+                $log->info('BI Export Job: Using first available column for ordering', [
                     'table' => $this->biExport->table,
                     'order_column' => $firstColumn
                 ]);
             }
 
-            $query->chunk($chunkSize, function ($chunk) use (&$headersWritten, &$recordCount, $fileHandle) {
+            $logRef = $log; // for use in closure
+            $query->chunk($chunkSize, function ($chunk) use (&$headersWritten, &$recordCount, $fileHandle, $logRef) {
                     foreach ($chunk as $record) {
                         $recordCount++;
 
@@ -96,7 +100,7 @@ class ExportBiToCsv implements ShouldQueue
                         if (!$headersWritten) {
                             $headersWritten = true;
                             $headers = array_keys((array) $record);
-                            Log::info('BI Export Job: Writing headers', [
+                            $logRef->info('BI Export Job: Writing headers', [
                                 'table' => $this->biExport->table,
                                 'headers' => $headers
                             ]);
@@ -113,7 +117,7 @@ class ExportBiToCsv implements ShouldQueue
                     }
 
                     if ($recordCount % 10000 === 0) {
-                        Log::info('BI Export Job: Progress update', [
+                        $logRef->info('BI Export Job: Progress update', [
                             'table' => $this->biExport->table,
                             'records_processed' => $recordCount
                         ]);
@@ -127,13 +131,13 @@ class ExportBiToCsv implements ShouldQueue
 
             fclose($fileHandle);
 
-            Log::info('BI Export Job: Finished processing records', [
+            $log->info('BI Export Job: Finished processing records', [
                 'table' => $this->biExport->table,
                 'total_records' => $recordCount
             ]);
 
             // Upload the file to storage
-            Log::info('BI Export Job: Writing to storage', [
+            $log->info('BI Export Job: Writing to storage', [
                 'table' => $this->biExport->table,
                 'target_file' => $targetFile,
                 'disk' => $this->disk
@@ -148,14 +152,14 @@ class ExportBiToCsv implements ShouldQueue
             // Clean up temporary file
             unlink($tempFile);
 
-            Log::info('BI Export Job: Export completed successfully', [
+            $log->info('BI Export Job: Export completed successfully', [
                 'table' => $this->biExport->table,
                 'target_file' => $targetFile,
                 'records_exported' => $recordCount
             ]);
 
         } catch (\Exception $e) {
-            Log::error('BI Export Job: Export failed', [
+            $log->error('BI Export Job: Export failed', [
                 'table' => $this->biExport->table,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()

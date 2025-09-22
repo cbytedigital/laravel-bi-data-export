@@ -21,7 +21,7 @@ class ExportBiDataCommand extends Command
      *
      * @var string
      */
-    protected $description = 'Trigger configured job to export BI data to files.';
+    protected $description = 'Trigger configured job to export BI data to files';
 
     /**
      * Execute the console command.
@@ -30,12 +30,15 @@ class ExportBiDataCommand extends Command
      */
     public function handle(): int
     {
-        Log::info('BI Export: Starting data export command');
+        $logChannel = config('bi-export.log_channel', config('logging.default'));
+        $log = Log::channel($logChannel);
+
+        $log->info('BI Export: Starting data export command');
 
         $models = config('bi-export.models');
         $tables = config('bi-export.tables');
 
-        Log::info('BI Export: Loaded config', [
+        $log->info('BI Export: Loaded config', [
             'models_count' => count($models),
             'tables_count' => count($tables),
             'models' => $models,
@@ -44,26 +47,26 @@ class ExportBiDataCommand extends Command
 
         // Include tables from config for export
         $exports = collect($tables);
-        Log::info('BI Export: Added tables to exports', ['table_exports' => $exports->keys()->toArray()]);
+        $log->info('BI Export: Added tables to exports', ['table_exports' => $exports->keys()->toArray()]);
 
         // Include models from config for export
         collect($models)
-            ->filter(function ($m) {
+            ->filter(function ($m) use ($log) {
                 $hasTraits = in_array(BiExportable::class, class_uses_recursive($m));
-                Log::info('BI Export: Checking model', [
+                $log->info('BI Export: Checking model', [
                     'model' => $m,
                     'has_bi_exportable_trait' => $hasTraits,
                     'traits' => class_uses_recursive($m)
                 ]);
                 return $hasTraits;
             })
-            ->each(function ($m) use ($exports) {
+            ->each(function ($m) use ($exports, $log) {
                 try {
                     $mi = new $m();
                     $table = $mi->getTable();
                     $exportValues = $mi->getBiExportValues();
 
-                    Log::info('BI Export: Adding model to exports', [
+                    $log->info('BI Export: Adding model to exports', [
                         'model' => $m,
                         'table' => $table,
                         'export_values' => $exportValues
@@ -71,7 +74,7 @@ class ExportBiDataCommand extends Command
 
                     $exports->put($table, $exportValues);
                 } catch (\Exception $e) {
-                    Log::error('BI Export: Error processing model', [
+                    $log->error('BI Export: Error processing model', [
                         'model' => $m,
                         'error' => $e->getMessage(),
                         'trace' => $e->getTraceAsString()
@@ -80,22 +83,22 @@ class ExportBiDataCommand extends Command
                 }
             });
 
-        Log::info('BI Export: Final exports collection', [
+        $log->info('BI Export: Final exports collection', [
             'exports_count' => $exports->count(),
             'export_tables' => $exports->keys()->toArray()
         ]);
 
         // Map values to dto and dispatch export job
         $exportJob = config('bi-export.export_job');
-        Log::info('BI Export: Using export job class', ['job_class' => $exportJob]);
+        $log->info('BI Export: Using export job class', ['job_class' => $exportJob]);
 
         $exports
-            ->map(function ($v, $k) {
-                Log::info('BI Export: Creating BiExport DTO', ['table' => $k, 'values' => $v]);
+            ->map(function ($v, $k) use ($log) {
+                $log->info('BI Export: Creating BiExport DTO', ['table' => $k, 'values' => $v]);
                 return BiExport::from($k, $v);
             })
-            ->each(function ($e) use ($exportJob) {
-                Log::info('BI Export: Dispatching job', [
+            ->each(function ($e) use ($exportJob, $log) {
+                $log->info('BI Export: Dispatching job', [
                     'table' => $e->table,
                     'job_class' => $exportJob
                 ]);
@@ -105,7 +108,7 @@ class ExportBiDataCommand extends Command
         $syncQueue = config('queue.default') === 'sync';
         $message = ($syncQueue ? 'Finished ' : 'Dispatched ').$exports->count().' export jobs.';
 
-        Log::info('BI Export: Command completed', [
+        $log->info('BI Export: Command completed', [
             'sync_queue' => $syncQueue,
             'jobs_count' => $exports->count()
         ]);
