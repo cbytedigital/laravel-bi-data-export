@@ -71,6 +71,10 @@ class Client extends Model
 ```
 
 If you require to export for example a pivot table, which does usually not have a dedicated model, you can manually add the table and required columns/config for exporting to the configuration file.
+
+There is also an option to add a custom log channel for all BI export logs. To use this, add a log channel name to your environment file.
+
+Then, in your ```logging.php``` config file, add the channel to the ```channels``` array.
 ```php
 <?php
 
@@ -122,6 +126,12 @@ return [
      * Ability to add a suffix to the filename. For example: table{suffix}.sql
      */
     'filename_suffix' => env('BI_FILENAME_SUFFIX')
+    
+    /**
+     * Logging channel to use for BI export logs.
+     * Falls back to the application's default logging channel if not set.
+     */
+    'log_channel' => env('BI_EXPORT_LOG_CHANNEL'),
 ];
 ```
 
