@@ -86,5 +86,5 @@ return [
      * Logging channel to use for BI export logs.
      * Falls back to the application's default logging channel if not set.
      */
-    'log_channel' => env('BI_EXPORT_LOG_CHANNEL', config('logging.default')),
+    'log_channel' => env('BI_EXPORT_LOG_CHANNEL'),
 ];
