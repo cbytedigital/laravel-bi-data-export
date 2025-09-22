@@ -80,6 +80,7 @@ class ExportBiDataCommand extends Command
                         'trace' => $e->getTraceAsString()
                     ]);
                     $this->error("Error processing model {$m}: " . $e->getMessage());
+                    throw $e;
                 }
             });
 
