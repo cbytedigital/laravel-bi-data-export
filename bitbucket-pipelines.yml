@@ -6,6 +6,6 @@ pipelines:
         clone:
           enabled: false
         script:
-          - git clone --bare git@bitbucket.org:cbytedigital/laravel-bi-data-export.git
+          - git clone --bare git@ssh.bitbucket.org:cbytedigital/laravel-bi-data-export.git
           - cd laravel-bi-data-export.git
           - git push --mirror git@github.com:cbytedigital/laravel-bi-data-export.git
